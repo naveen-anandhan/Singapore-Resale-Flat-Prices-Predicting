@@ -63,12 +63,9 @@ The app uses a pre-trained XGBoost regression model for predicting the resale pr
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request or open an issue if you have any suggestions or improvements.
+Contributions are welcome! Please fork the repository and use a feature branch. Pull requests are warmly welcome.
 
-## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## Contact
 
----
-
-Feel free to customize the content and sections according to your project's needs.
+Created by [Naveen Anandhan](https://www.linkedin.com/in/naveen-anandhan-8b03b62a5/?trk=public-profile-join-page) - feel free to contact me!
