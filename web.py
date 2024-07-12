@@ -4,20 +4,31 @@ import numpy as np
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, StandardScaler
 from scipy.stats import boxcox
+import os
 
-st.set_page_config(page_title="Singapore Resale Flat Price Prediction - Made by: Naveen A", layout="wide", initial_sidebar_state="auto")        
+st.set_page_config(page_title="Singapore Resale Flat Price Prediction - Made by: Naveen A", layout="wide", initial_sidebar_state="auto")
 
+# Helper function to load pickle files with error handling
+def load_pickle(file_name):
+    try:
+        with open(file_name, 'rb') as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        st.error(f"File not found: {file_name}")
+        return None
+    except Exception as e:
+        st.error(f"Error loading {file_name}: {e}")
+        return None
 
-with open('town_encoder.pkl', 'rb') as f:
-    town_encoder = pickle.load(f)
-with open('flat_model_encoder.pkl', 'rb') as f:
-    flat_model_encoder = pickle.load(f)
-with open('flat_type_encoder.pkl', 'rb') as f:
-    flat_type_encoder = pickle.load(f)
-with open('address_encoder.pkl', 'rb') as f:
-    address_encoder = pickle.load(f)
-with open('scaler.pkl', 'rb') as file:
-    scaler = pickle.load(file)
+# Load encoders and scaler
+town_encoder = load_pickle('town_encoder.pkl')
+flat_model_encoder = load_pickle('flat_model_encoder.pkl')
+flat_type_encoder = load_pickle('flat_type_encoder.pkl')
+address_encoder = load_pickle('address_encoder.pkl')
+scaler = load_pickle('scaler.pkl')
+
+if None in [town_encoder, flat_model_encoder, flat_type_encoder, address_encoder, scaler]:
+    st.stop()  # Stop the app if any of the files failed to load
 
 storey = ['01 TO 03', '01 TO 05', '04 TO 06', '06 TO 10', '07 TO 09', '10 TO 12', '11 TO 15', '13 TO 15', 
           '16 TO 18', '16 TO 20', '19 TO 21', '21 TO 25', '22 TO 24', '25 TO 27', '26 TO 30', '28 TO 30', 
@@ -25,12 +36,11 @@ storey = ['01 TO 03', '01 TO 05', '04 TO 06', '06 TO 10', '07 TO 09', '10 TO 12'
           '49 TO 51']
 
 all_addresses = address_encoder.classes_.tolist()
-all_towns  = town_encoder.classes_.tolist()
+all_towns = town_encoder.classes_.tolist()
 all_flat_model = flat_model_encoder.categories_[0].tolist()
-flat_type_mapping  = flat_type_encoder.categories_[0].tolist()
+flat_type_mapping = flat_type_encoder.categories_[0].tolist()
 
 def get_user_input():
-    
     st.subheader(":violet[Fill all the fields and press the button below to view the **Predicted price** of Resale Flat Price : ]")
     cc1, cc2 = st.columns([2, 2])
     
@@ -39,8 +49,8 @@ def get_user_input():
         town = st.selectbox("Town : ", all_towns)
         flat_model = st.selectbox("Flat Model : ", all_flat_model)
         flat_type = st.selectbox("Flat Type : ", list(flat_type_mapping))
-        storey_range = st.selectbox("Storey Range : ", storey)    
-    with cc2:  
+        storey_range = st.selectbox("Storey Range : ", storey)
+    with cc2:
         floor_area_sqm = st.number_input("Floor Area (sqm) : ")
         price_per_sqm = st.number_input("price Area (sqm) : ")
         lease_commence_date = st.number_input("Lease Commencement Year (YYYY) : ", min_value=1966, max_value=2023)
@@ -55,17 +65,23 @@ def get_user_input():
         'floor_area_sqm': floor_area_sqm,
         'price_per_sqm': price_per_sqm,
         'lease_commence_date': lease_commence_date,
-        'address': address }
+        'address': address
+    }
     
     return pd.DataFrame(user_input_data, index=[0])
 
 def load_model():
-    with open('ET_regression_model.pkl', 'rb') as file:
-        final_model = pickle.load(file)
-    return final_model
+    try:
+        with open('ET_regression_model.pkl', 'rb') as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        st.error("Model file not found: ET_regression_model.pkl")
+        return None
+    except Exception as e:
+        st.error(f"Error loading model file: {e}")
+        return None
 
 def data_transformation_for_the_model(df):
-    
     def to_upper(df):
         string_cols = df.select_dtypes(include='object').columns
         df[string_cols] = df[string_cols].apply(lambda x: x.str.upper())
@@ -74,13 +90,13 @@ def data_transformation_for_the_model(df):
     df = (df
           .pipe(to_upper)
           .assign(
-                  town_ENCODED=lambda x: town_encoder.transform(x[["town"]]),
-                  flat_model_ENCODED=lambda x: flat_model_encoder.transform(x[["flat_model"]]),
-                  flat_type_ENCODED=lambda x: flat_type_encoder.transform(x[["flat_type"]]),
-                  address_ENCODED=lambda x: address_encoder.transform(x[["address"]]),
-                  median_storey_range=lambda x: x['storey_range'].apply(lambda storey_range: (int(storey_range.split(' TO ')[0]) + int(storey_range.split(' TO ')[1])) / 2).astype(int))
-          [['year', 'town_ENCODED', 'flat_model_ENCODED', 'flat_type_ENCODED', 'median_storey_range',
-            'floor_area_sqm', 'price_per_sqm', 'lease_commence_date', 'address_ENCODED']]
+              town_ENCODED=lambda x: town_encoder.transform(x[["town"]]),
+              flat_model_ENCODED=lambda x: flat_model_encoder.transform(x[["flat_model"]]),
+              flat_type_ENCODED=lambda x: flat_type_encoder.transform(x[["flat_type"]]),
+              address_ENCODED=lambda x: address_encoder.transform(x[["address"]]),
+              median_storey_range=lambda x: x['storey_range'].apply(lambda storey_range: (int(storey_range.split(' TO ')[0]) + int(storey_range.split(' TO ')[1])) / 2).astype(int)
+          )
+          [['year', 'town_ENCODED', 'flat_model_ENCODED', 'flat_type_ENCODED', 'median_storey_range', 'floor_area_sqm', 'price_per_sqm', 'lease_commence_date', 'address_ENCODED']]
           )
 
     df_scaled = scaler.transform(df)
@@ -89,16 +105,14 @@ def data_transformation_for_the_model(df):
     return df
 
 def main():
-    
-    with st.sidebar: 
+    with st.sidebar:
         st.image("https://www.onepointltd.com/wp-content/uploads/2020/03/inno2.png")
         st.title("Select options")
-        choice = st.radio("Navigation", ["Home","Model","Multiple prediction"])
+        choice = st.radio("Navigation", ["Home", "Model", "Multiple prediction"])
         st.info("This project application helps you predict the price and status")
     
     if choice == "Home":
         st.title("Welcome to the Singapore Resale Flat Price Prediction App")
-    
         st.subheader("About the App")
         st.write("- Welcome to our interactive application designed to predict resale flat prices in Singapore. Whether you're a prospective buyer, seller, or simply curious about property trends, our app provides accurate predictions based on advanced machine learning models.")
         
@@ -133,8 +147,9 @@ def main():
         if st.button("Predict"):
             df = data_transformation_for_the_model(user_input_data)
             model = load_model()
-            predicted_price = model.predict(df)
-            st.success(f'Predicted price :green[$] :green {predicted_price[0]:.2f}')
+            if model is not None:
+                predicted_price = model.predict(df)
+                st.success(f'Predicted price :green[$] :green {predicted_price[0]:.2f}')
             
     if choice == "Multiple prediction":
         st.title(":violet[Multiple Resale Flat Price Prediction]")
@@ -149,23 +164,22 @@ def main():
 
             data_transformed = data_transformation_for_the_model(data)
             model = load_model()
-            predictions = model.predict(data_transformed)
-            predicted_prices = predictions  
+            if model is not None:
+                predictions = model.predict(data_transformed)
+                predicted_prices = predictions  
 
+                data['Predicted_Price_Range'] = predicted_prices
 
-            data['Predicted_Price_Range'] = predicted_prices
-            
+                st.write("Data with Predictions")
+                st.write(data)
+                
+                csv = data.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="Download data with predictions as CSV",
+                    data=csv,
+                    file_name='predicted_resale_prices.csv',
+                    mime='text/csv',
+                )
 
-            st.write("Data with Predictions")
-            st.write(data)
-            
-            csv = data.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="Download data with predictions as CSV",
-                data=csv,
-                file_name='predicted_resale_prices.csv',
-                mime='text/csv',
-            )
-            
 if __name__ == "__main__":
     main()
