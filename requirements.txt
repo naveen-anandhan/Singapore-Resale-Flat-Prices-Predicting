@@ -1,6 +1,5 @@
-pip==23.1
-numpy
-pandas
-scikit-learn
-streamlit
+numpy==2.0.0
+pandas==2.2.2
+scikit-learn==1.5.0
+streamlit==1.36.0
 
