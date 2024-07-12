@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder, OrdinalEncoder, StandardScaler
-from scipy.stats import boxcox
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 import os
 
 st.set_page_config(page_title="Singapore Resale Flat Price Prediction - Made by: Naveen A", layout="wide", initial_sidebar_state="auto")
