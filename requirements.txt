@@ -1,4 +1,6 @@
+pip==23.1
+numpy
 pandas
-streamlit
 scikit-learn
-scipy
+streamlit
+
