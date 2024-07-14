@@ -81,9 +81,8 @@ The application uses the `ExtraTreesRegressor` model for prediction. The data pr
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
-
 ## Acknowledgements
 
-- Developed by Naveen Anandhan.
+- Created by [Naveen Anandhan](https://www.linkedin.com/in/naveen-anandhan-8b03b62a5/?trk=public-profile-join-page) - feel free to contact me!
 - Inspired by the real estate market trends in Singapore.
 - Special thanks to the open-source community for the tools and libraries used in this project.
